@@ -46,16 +46,16 @@
 
    Feel free to install other packages when you need them.
 
-6. Now explore some high-quality MuJoCo models, which can be found DeepMind's `mujoco_menagerie` repository. For that, clone the repo into a directory named `~/cmpe434/mujoco_menagerie` as follows:
+6. Now explore some high-quality MuJoCo models, which can be found DeepMind's `mujoco_menagerie` repository. For that, clone the repo into a directory named `~/labs434/mujoco_menagerie` as follows:
 
    ```
-   git clone https://github.com/deepmind/mujoco_menagerie.git ~/cmpe434/mujoco_menagerie
+   git clone https://github.com/deepmind/mujoco_menagerie.git ~/labs434/mujoco_menagerie
    ```
    
 7. Start the viewer for the Robotiq 2F-85 model:
 
    ```
-   python -m mujoco.viewer --mjcf ~/cmpe434/mujoco_menagerie/robotiq_2f85/scene.xml
+   python -m mujoco.viewer --mjcf ~/labs434/mujoco_menagerie/robotiq_2f85/scene.xml
    ```
    
    This is the MuJoCo model of a robotic gripper together with a hanging box. Find the control tab and control the robot's position from the lever.
