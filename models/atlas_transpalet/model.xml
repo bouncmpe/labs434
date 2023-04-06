@@ -1,0 +1,136 @@
+<mujoco model="atlas_transpalet">
+	<compiler meshdir="assets" />
+	
+	<asset>
+		<mesh name="atlas_transpalet_drive_wheel" file="atlas_transpalet_drive_wheel.stl" scale="0.001 0.001 0.001" refquat="1 1 0 0"/>
+		<mesh name="atlas_transpalet_ball_wheel" file="atlas_transpalet_ball_wheel.stl" scale="0.001 0.001 0.001" refquat="1 1 0 0"/>
+		<mesh name="atlas_transpalet_fork_wheel" file="atlas_transpalet_fork_wheel.stl" scale="0.001 0.001 0.001" refquat="1 1 0 0"/>
+		<mesh name="atlas_transpalet_fork" file="atlas_transpalet_fork.stl" scale="0.001 0.001 0.001" refquat="-1 1 0 0"/>
+		<mesh name="atlas_transpalet_body" file="atlas_transpalet_body.stl" scale="0.001 0.001 0.001" refquat="-1 1 0 0"/>
+	</asset>
+	
+	<default>
+		<default class="atlas_transpalet">
+			<default class="drive_wheel_geom">
+				<geom fitscale="1" type="ellipsoid" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.115 0.115 0.115" mass="1" mesh="atlas_transpalet_drive_wheel"/>
+			</default>
+			<default class="ball_wheel_geom">
+				<geom fitscale="1" type="ellipsoid" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.0625 0.0625 0.0625" mass="0.2" mesh="atlas_transpalet_ball_wheel"/>
+			</default>
+			<default class="fork_wheel_geom">
+				<geom fitscale="1" type="ellipsoid" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.040 0.040 0.040" mass="5"  mesh="atlas_transpalet_fork_wheel"/>
+			</default>
+			<default class="fork_geom">
+				<geom fitscale="1" type="box" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="1.350 0.100 0.075" mass="1" mesh="atlas_transpalet_fork"/>
+			</default>
+			<default class="steering_joint">
+				<joint type="hinge" axis="0 0 1" limited="true" range="-1.57 1.57" frictionloss="0.01" damping="15" armature="0.2"/>
+			</default>
+			<default class="throttle_joint">
+				<joint type="hinge" axis="0 1 0" frictionloss="0.01" damping="0.01" armature="0.01" limited="false" />
+			</default>
+			<default class="fork_lift_joint">
+				<joint type="slide" axis="0 0 1" limited="true" range="0 0.04" frictionloss="0.01" damping="150" armature="0.002"/>
+			</default>			
+		</default>
+	</default>
+	
+	<worldbody>
+		<body name="atlas_transpalet_body" pos="0.0 0.0 0.0" euler="0 0 1.57">
+			<camera name="third_person" mode="fixed" pos="-1 0 1" xyaxes="0 -1 0 1 0 1"/>
+			<joint type="free" />
+			<site pos="0 0 0" size="0.001 0.001 0.001"/>
+			
+			<geom name="atlas_transpalet_body" pos="1.275 0 0.00" type="mesh" mass="5" mesh="atlas_transpalet_body" />
+			
+			<body name="drive_wheel_body" pos="1.275 0 0.105" >
+				<joint class="steering_joint" name="drive_wheel_steering_joint" />
+				<joint class="throttle_joint" name="drive_wheel_throttle_tendon" />
+				<geom class="drive_wheel_geom" pos="0 -0.0575 0" rgba="1 1 1 1"/>
+				<geom class="drive_wheel_geom" pos="0 -0.0575 0" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="ball_wheel_left_body" pos="1.265 0.20075 0.0625">
+				<joint class="steering_joint" name="ball_wheel_left_steering" />,
+				<joint class="throttle_joint" name="ball_wheel_left_throttle_tendon" />
+				<geom class="ball_wheel_geom" pos="0 -0.03125 0" rgba="1 1 1 1"/>
+				<geom class="ball_wheel_geom" pos="0 -0.03125 0" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="ball_wheel_right_body" pos="1.265 -0.26325 0.0625">
+				<joint class="steering_joint" name="ball_wheel_right_steering" />
+				<joint class="throttle_joint" name="ball_wheel_right_throttle_tendon" />
+				<geom class="ball_wheel_geom" pos="0 -0.03125 0" rgba="1 1 1 1"/>
+				<geom class="ball_wheel_geom" pos="0 -0.03125 0" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+		
+			<body name="fork_wheel_left_1" pos="0 0.145 0.040">
+				<joint class="throttle_joint" pos="0 0.04 0"/>
+				<geom class="fork_wheel_geom" group="1" rgba="1 1 1 1"/>
+				<geom class="fork_wheel_geom" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="fork_wheel_left_2" pos="-0.1 0.145 0.040">
+				<joint class="throttle_joint" pos="0 0.04 0"/>
+				<geom class="fork_wheel_geom" rgba="1 1 1 1"/>
+				<geom class="fork_wheel_geom" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="fork_wheel_right_1" pos="0 -0.225 0.040">
+				<joint class="throttle_joint" pos="0 0.04 0"/>
+				<geom class="fork_wheel_geom" rgba="1 1 1 1"/>
+				<geom class="fork_wheel_geom" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="fork_wheel_right_2" pos="-0.1 -0.225 0.040">
+				<joint class="throttle_joint" pos="0 0.04 0"/>
+				<geom class="fork_wheel_geom" rgba="1 1 1 1"/>
+				<geom class="fork_wheel_geom" type="mesh" group="1" contype="0" conaffinity="0" rgba="1 1 1 0.3"/>
+			</body>
+			
+			<body name="fork_lift_body" pos="1.115 0 0.0">
+				<joint class="fork_lift_joint" name="fork_lifting" />				
+				<geom pos="0 -0.185 0.02" class="fork_geom" type="mesh"group="1"/>
+				<geom pos="0 0.185 0.02" class="fork_geom" type="mesh" group="1"/>
+			</body>
+			
+		</body>
+	</worldbody>
+	
+	<contact>
+	    <exclude body1="atlas_transpalet_body" body2="drive_wheel_body"/>
+	    <exclude body1="atlas_transpalet_body" body2="ball_wheel_left_body"/>
+	    <exclude body1="atlas_transpalet_body" body2="ball_wheel_right_body"/>
+	    <exclude body1="atlas_transpalet_body" body2="fork_lift_body"/>
+    	    <exclude body1="fork_lift_body" body2="fork_wheel_left_1"/>
+    	    <exclude body1="fork_lift_body" body2="fork_wheel_left_2"/>
+    	    <exclude body1="fork_lift_body" body2="fork_wheel_right_1"/>
+    	    <exclude body1="fork_lift_body" body2="fork_wheel_right_2"/>
+  	</contact>
+	
+	<actuator>
+		<velocity kv="1000" gear="0.1" forcelimited="true" forcerange="-50000 50000" name="throttle_velocity" tendon="throttle_tendon" />
+		<position gear="0.65" class="steering_joint" kp="1000" name="steering_position" joint="drive_wheel_steering_joint"/>
+		<position  gear="20" class="fork_lift_joint" kp="100" name="forh_height" joint="fork_lifting" ctrlrange ="0 1" ctrllimited="true" />
+	</actuator>
+	
+	<tendon>
+		<fixed name="throttle_tendon">
+			<joint joint="drive_wheel_throttle_tendon"  coef="0.25" />
+			<joint joint="ball_wheel_left_throttle_tendon"  coef="0.25" />
+			<joint joint="ball_wheel_right_throttle_tendon" coef="0.25" />
+		</fixed>
+	</tendon>
+	
+	<equality>
+		<joint joint1="ball_wheel_left_steering" joint2="drive_wheel_steering_joint" polycoef="0 1 0 0 0" />
+		<joint joint1="ball_wheel_right_steering" joint2="drive_wheel_steering_joint" polycoef="0 1 0 0 0" />
+	</equality>
+	
+	<sensor>
+	    <jointpos name="drive_wheel_steering_position" joint="drive_wheel_steering_joint"/>
+    	    <jointvel name="drive_wheel_throttle_velocity" joint="drive_wheel_throttle_tendon"/>
+	</sensor>
+	
+</mujoco>
+

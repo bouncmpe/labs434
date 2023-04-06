@@ -1,0 +1,28 @@
+<mujoco model="palet">
+	
+	<default>
+		<default class="palet">
+			<default class="palet_side_geom">
+				<geom type="box" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.60 0.050 0.075" mass="0.1"/>
+			</default>
+			<default class="palet_middle_geom">
+				<geom type="box" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.60 0.025 0.075" mass="0.1"/>
+			</default>
+			<default class="palet_top_geom">
+				<geom type="box" friction="2 0.005 0.0001" contype="1" conaffinity="0" size="0.60 0.440 0.040" mass="0.1"/>
+			</default>
+		</default>
+	</default>
+	
+	<worldbody>
+		<body name="palet_body" pos="-2 2 0.075" euler="0 0 1.57">
+			<site pos="0 0 0" size="0.001 0.001 0.001"/>
+			<joint type="free" />
+			<geom pos="0 0.400 0" class="palet_side_geom" contype="1" conaffinity="1"/>
+			<geom pos="0 0 0" class="palet_middle_geom" contype="1" conaffinity="1"/>
+			<geom pos="0 -0.400 0" class="palet_side_geom" contype="1" conaffinity="1"/>
+			<geom pos="0 0 0.075" class="palet_top_geom" contype="1" conaffinity="1"/>
+		</body>
+	</worldbody>
+		
+</mujoco>
