@@ -2,7 +2,7 @@
 	
 	<worldbody>
 		<body>
-			<site pos="2 -2 0" size="0.1 0.1 0.1"/>
+			<site name="palet_drop" pos="5 5 0" size="0.1 0.1 0.1"/>
 		</body>
 	</worldbody>
 		
