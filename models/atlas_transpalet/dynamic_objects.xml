@@ -12,17 +12,17 @@
 	</default>
 	
 	<worldbody>
-		<body name="dynamic_object_body_1" pos="-1 3 1">
-			<site name="dynamic_object_1_link" pos="0 0 0" size="0.001 0.001 0.001"/>
-			<joint class="dynamic_object_joint" name="dynamic_object_joint_1" />				
+		<body name="dynamic_object_body_1" pos="-1 0 1">
+			<site name="dynamic_object_1_link" pos="0 0 0" size="0.01 0.01 0.01"/>
+			<joint class="dynamic_object_joint" name="dynamic_object_joint_1" axis="1 0 0" />				
 			<geom name="dynamic_object_1" class="dynamic_object" pos="0 0 0" size="0.2 1"/>
 		</body>
-		<body name="dynamic_object_body_2" pos="14 3 1">
+		<body name="dynamic_object_body_2" pos="10 1 1">
 			<site name="dynamic_object_2_link" pos="0 0 0" size="0.001 0.001 0.001"/>
-			<joint class="dynamic_object_joint" name="dynamic_object_joint_2" axis="1 1 0"/>				
+			<joint class="dynamic_object_joint" name="dynamic_object_joint_2" axis="1 0 0"/>				
 			<geom name="dynamic_object_2" class="dynamic_object" pos="0 0 0" size="0.2 1"/>
 		</body>
-		<body name="dynamic_object_body_3" pos="-14 4 1">
+		<body name="dynamic_object_body_3" pos="-11 -1 1">
 			<site name="dynamic_object_3_link" pos="0 0 0" size="0.001 0.001 0.001"/>
 			<joint class="dynamic_object_joint" name="dynamic_object_joint_3" axis="-1 0 0"/>				
 			<geom name="dynamic_object_3" class="dynamic_object" pos="0 0 0" size="0.2 1"/>
