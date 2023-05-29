@@ -8,6 +8,7 @@
 	<include file="palet_drop.xml"/>
 	<!--<include file="walls.xml"/>-->
 	<include file="small_walls.xml"/>
+	<include file="dynamic_objects.xml"/>
 	
 	<asset>
 		<texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
