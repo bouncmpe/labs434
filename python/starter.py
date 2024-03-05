@@ -30,8 +30,11 @@ def key_callback(keycode):
 
 with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
 
-  velocity = m.actuator("throttle_velocity")
-  steering = m.actuator("steering")
+  # velocity = m.actuator("throttle_velocity")
+  # steering = m.actuator("steering")
+
+  velocity = d.actuator("throttle_velocity")
+  steering = d.actuator("steering")
 
   # Close the viewer automatically after 30 wall-seconds.
   start = time.time()
@@ -39,8 +42,8 @@ with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
     step_start = time.time()
 
     if not paused:
-        d.ctrl[velocity.id] = 1.0 # apply a velocity control value
-        d.ctrl[steering.id] = 1.0 # apply a steering control value
+        velocity.ctrl = 1.0 # update velocity control value
+        steering.ctrl = 1.0 # update steering control value
 
         # mj_step can be replaced with code that also evaluates
         # a policy and applies a control signal before stepping the physics.
