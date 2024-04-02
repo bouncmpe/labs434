@@ -193,10 +193,10 @@ def generate(cellsX, cellsY, cellSize=5):
     # tiles[stairsUp] = "<"
     # tiles[stairsDown] = ">"
 
-    for y in range(tilesY):
-        for x in range(tilesX):
-            sys.stdout.write(tiles[(x, y)])
-        sys.stdout.write("\n")
+    # for y in range(tilesY):
+    #     for x in range(tilesX):
+    #         sys.stdout.write(tiles[(x, y)])
+    #     sys.stdout.write("\n")
 
     return tiles, rooms, connections
 
