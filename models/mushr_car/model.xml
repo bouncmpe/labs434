@@ -20,10 +20,10 @@
   </default>
   <worldbody>
     <body name="buddy" pos="0.0 0.0 0.0" euler="0 0 0.0">
-      <camera name="third_person" mode="fixed" pos="-1 0 1" xyaxes="0 -1 0 0.707 0 0.707"/>
+      <camera name="third_person" mode="fixed" pos="-2 0 0.5" xyaxes="0 -2 0 0.1 0 1.41"/>
       <joint type="free" />
       <site name="imu" pos="-0.005 0 .165" />
-      <camera name="realsense_d435i" mode="fixed" pos="-0.005 0 .165" euler="0 4.712 4.712" />
+      <camera name="realsense_d435i" mode="fixed" pos="-0.005 0 .165" xyaxes="0 -2 0 0.1 0 1.41" />
 
       <geom pos="0 0 0.094655" type="mesh" mass="3.542137" mesh="mushr_base_nano" />
       <geom name="realsense_d435i" size="0.012525 0.045 0.0125" pos="0.0123949 0 0.162178" mass="0.072" type="box" />
