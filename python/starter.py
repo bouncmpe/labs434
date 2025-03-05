@@ -20,9 +20,10 @@ def main():
     scene_spec = mujoco.MjSpec.from_file("scenes/empty_floor.xml")
     robot_spec = mujoco.MjSpec.from_file("models/mushr_car/model.xml")
 
-    # Add the robot to the scene
-    # A prefix is required to distinguish robots if we add more robots using the same model.
-    scene_spec.attach(robot_spec, prefix="robot-", frame="world")
+    # Add robots to the scene:
+    # - There must be a frame or site in the scene model to attach the robot to.
+    # - A prefix is required if we add multiple robots using the same model.
+    scene_spec.attach(robot_spec, frame="world", prefix="robot-")
 
     # Initalize our simulation
     # Roughly, m keeps static (model) information, and d keeps dynamic (state) information. 
@@ -32,7 +33,7 @@ def main():
     with mujoco.viewer.launch_passive(m, d, key_callback=mujoco_viewer_callback) as viewer:
 
       # These actuator names are defined in the model XML file for the robot.
-      # And we prefixed them to distinguish from other objects at the attachment.
+      # Prefixes distinguish from other actuators from the same model.
       velocity = d.actuator("robot-throttle_velocity")
       steering = d.actuator("robot-steering")
 
