@@ -2,6 +2,15 @@ import time
 import mujoco
 import mujoco.viewer
 
+# Helper construsts for the viewer for pause/unpause functionality.
+paused = False
+
+# Pressing SPACE key toggles the paused state.
+def mujoco_viewer_callback(keycode):
+    global paused
+    if keycode == ord(' '):  # Use ord(' ') for space key comparison
+        paused = not paused
+
 def main():
 
     # Uncomment to start with an empty model
@@ -20,18 +29,7 @@ def main():
     m = scene_spec.compile()
     d = mujoco.MjData(m)
 
-
-    # Helper construsts for the viewer for pause/unpause functionality.
-    paused = False
-
-    # Pressing SPACE key toggles the paused state. 
-    # You can define other keys for other actions here.
-    def key_callback(keycode):
-      if chr(keycode)== ' ':
-        global paused
-        paused = not paused
-
-    with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
+    with mujoco.viewer.launch_passive(m, d, key_callback=mujoco_viewer_callback) as viewer:
 
       # These actuator names are defined in the model XML file for the robot.
       # And we prefixed them to distinguish from other objects at the attachment.
@@ -58,6 +56,7 @@ def main():
         time_until_next_step = m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
           time.sleep(time_until_next_step)
+
 
 if __name__ == "__main__":
     main()
