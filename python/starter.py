@@ -1,58 +1,63 @@
 import time
-
+import pathlib
 import mujoco
 import mujoco.viewer
 
-import cmpe434_utils
+def main():
 
-scene, scene_assets = cmpe434_utils.get_model('scenes/empty_floor.xml')
-robot, robot_assets = cmpe434_utils.get_model('models/mushr_car/model.xml')
-# robot, robot_assets = cmpe434_utils.get_model('models/mujoco_car/model.xml')
-# robot, robot_assets = cmpe434_utils.get_model('models/skydio_x2/x2.xml')
+    # Uncomment to an empty model
+    # scene_spec = mujoco.MjSpec() 
 
-# Add the robot to the scene.
-scene.include_copy(robot)
+    # Uncomment to an empty floor model
+    scene_spec = mujoco.MjSpec.from_file("scenes/empty_floor.xml")
+    robot_spec = mujoco.MjSpec.from_file("models/mushr_car/model.xml")
 
-# Combine all assets into a single dictionary.
-all_assets = {**scene_assets, **robot_assets}
+    # Add the robot to the scene
+    scene_spec.attach(robot_spec, prefix="robot-", frame="world", )
 
-m = mujoco.MjModel.from_xml_string(scene.to_xml_string(), assets=all_assets)
-d = mujoco.MjData(m)
+    # Initalize our simulation
+    # Roughly, m keeps static (model) information, and d keeps dynamic (state) information. 
+    m = scene_spec.compile()
+    d = mujoco.MjData(m)
 
-paused = False # Global variable to control the pause state.
 
-# Pressing SPACE key toggles the paused state. 
-# You can define other keys for other actions here.
-def key_callback(keycode):
-  if chr(keycode) == ' ':
-    global paused
-    paused = not paused
+    # Helper construsts for the viewer for pause/unpause functionality.
+    paused = False
 
-with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
+    # Pressing SPACE key toggles the paused state. 
+    # You can define other keys for other actions here.
+    def key_callback(keycode):
+      if chr(keycode)== ' ':
+        global paused
+        paused = not paused
 
-  # velocity = m.actuator("throttle_velocity")
-  # steering = m.actuator("steering")
+    with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
 
-  velocity = d.actuator("throttle_velocity")
-  steering = d.actuator("steering")
+      # These actuator names are defined in the model XML file for the robot.
+      # And we prefixed them to distinguish from other objects at the attachment.
+      velocity = d.actuator("robot-throttle_velocity")
+      steering = d.actuator("robot-steering")
 
-  # Close the viewer automatically after 30 wall-seconds.
-  start = time.time()
-  while viewer.is_running() and time.time() - start < 30:
-    step_start = time.time()
+      # Close the viewer automatically after 30 wall-clock-seconds.
+      start = time.time()
+      while viewer.is_running() and time.time() - start < 30:
+        step_start = time.time()
 
-    if not paused:
-        velocity.ctrl = 1.0 # update velocity control value
-        steering.ctrl = 1.0 # update steering control value
+        if not paused:
+            velocity.ctrl = 1.0 # update velocity control value
+            steering.ctrl = 8.0 # update steering control value
 
-        # mj_step can be replaced with code that also evaluates
-        # a policy and applies a control signal before stepping the physics.
-        mujoco.mj_step(m, d)
+            # mj_step can be replaced with code that also evaluates
+            # a policy and applies a control signal before stepping the physics.
+            mujoco.mj_step(m, d)
 
-        # Pick up changes to the physics state, apply perturbations, update options from GUI.
-        viewer.sync()
+            # Pick up changes to the physics state, apply perturbations, update options from GUI.
+            viewer.sync()
 
-    # Rudimentary time keeping, will drift relative to wall clock.
-    time_until_next_step = m.opt.timestep - (time.time() - step_start)
-    if time_until_next_step > 0:
-      time.sleep(time_until_next_step)
+        # Rudimentary time keeping, will drift relative to wall clock.
+        time_until_next_step = m.opt.timestep - (time.time() - step_start)
+        if time_until_next_step > 0:
+          time.sleep(time_until_next_step)
+
+if __name__ == "__main__":
+    main()
