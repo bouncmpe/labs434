@@ -1,22 +1,29 @@
 // For format details, see https://aka.ms/devcontainer.json. 
 {
-    "name": "bouncmpe",
-    "context": "..",
-    "dockerFile": "./Dockerfile",
-    "settings": {},
-    "extensions": [
-		"esbenp.prettier-vscode",
-		"ms-python.python",
-		"samuelcolvin.jinjahtml"
-	],
-    "runArgs": ["--gpus", "all"],
-    "containerEnv": {
-        "DISPLAY": "${env:DISPLAY}",
-        "MUJOCO_GL": "egl"
-    },
-    "mounts": [
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
-    ],
-    // Uncomment to connect as a non-root user if you've added one.
-    "remoteUser": "bouncmpe"
+  "name": "bouncmpe",
+  "context": "..",
+  "dockerFile": "./Dockerfile",
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "samuelcolvin.jinjahtml"
+      ],
+    }
+  },
+  "runArgs": [
+    "--gpus",
+    "all"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${env:DISPLAY}",
+    "MUJOCO_GL": "egl"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+  ],
+  // Uncomment to connect as a non-root user if you've added one.
+  "remoteUser": "nonroot"
 }
