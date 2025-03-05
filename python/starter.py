@@ -1,19 +1,19 @@
 import time
-import pathlib
 import mujoco
 import mujoco.viewer
 
 def main():
 
-    # Uncomment to an empty model
+    # Uncomment to start with an empty model
     # scene_spec = mujoco.MjSpec() 
 
-    # Uncomment to an empty floor model
+    # Load existing XML models
     scene_spec = mujoco.MjSpec.from_file("scenes/empty_floor.xml")
     robot_spec = mujoco.MjSpec.from_file("models/mushr_car/model.xml")
 
     # Add the robot to the scene
-    scene_spec.attach(robot_spec, prefix="robot-", frame="world", )
+    # A prefix is required to distinguish robots if we add more robots using the same model.
+    scene_spec.attach(robot_spec, prefix="robot-", frame="world")
 
     # Initalize our simulation
     # Roughly, m keeps static (model) information, and d keeps dynamic (state) information. 
