@@ -3,8 +3,6 @@ import mujoco
 import mujoco.viewer
 import random
 import numpy as np
-from scipy.spatial.transform import Rotation
-
 
 import cmpe434_dungeon as dungeon
 
@@ -44,6 +42,7 @@ def main():
     robot_spec = mujoco.MjSpec.from_file("models/mushr_car/model.xml")
 
 
+
     # Add robots to the scene:
     # - There must be a frame or site in the scene model to attach the robot to.
     # - A prefix is required if we add multiple robots using the same model.
@@ -53,8 +52,10 @@ def main():
 
     # Randomize initial orientation
     yaw = np.random.uniform(-np.pi, np.pi)
-    initial_quat = Rotation.from_euler('z', yaw).as_quat()
-    scene_spec.body("robot-buddy").quat[:] = initial_quat
+    euler = np.array([0.0, 0.0, yaw], dtype=np.float64)
+    quat = np.zeros(4, dtype=np.float64)
+    mujoco.mju_euler2Quat(quat, euler, 'xyz')
+    scene_spec.body("robot-buddy").quat[:] = quat
 
     # Initalize our simulation
     # Roughly, m keeps static (model) information, and d keeps dynamic (state) information. 
