@@ -3,6 +3,7 @@ import mujoco
 import mujoco.viewer
 import random
 import numpy as np
+import scipy as sp
 
 import cmpe434_dungeon as dungeon
 
@@ -41,8 +42,6 @@ def main():
 
     robot_spec = mujoco.MjSpec.from_file("models/mushr_car/model.xml")
 
-
-
     # Add robots to the scene:
     # - There must be a frame or site in the scene model to attach the robot to.
     # - A prefix is required if we add multiple robots using the same model.
@@ -57,10 +56,26 @@ def main():
     mujoco.mju_euler2Quat(quat, euler, 'xyz')
     scene_spec.body("robot-buddy").quat[:] = quat
 
+    # Add obstacles to the scene
+    for i, room in enumerate(rooms):
+        obs_pos = random.choice([tile for tile in room if tile != start_pos and tile != final_pos])
+        scene_spec.worldbody.add_geom(
+            name='Z{}'.format(i), 
+            type=mujoco.mjtGeom.mjGEOM_CYLINDER, 
+            size=[0.2, 0.05, 0.1], 
+            rgba=[0.8, 0.0, 0.1, 1],  
+            pos=[obs_pos[0]*2, obs_pos[1]*2, 0.08]
+        )
+
     # Initalize our simulation
     # Roughly, m keeps static (model) information, and d keeps dynamic (state) information. 
     m = scene_spec.compile()
     d = mujoco.MjData(m)
+
+    obstacles = [m.geom(i).id for i in range(m.ngeom) if m.geom(i).name.startswith("Z")]
+    uniform_direction_dist = sp.stats.uniform_direction(2)
+    obstacle_direction = [[x, y, 0] for x,y in uniform_direction_dist.rvs(len(obstacles))]
+    unused = np.zeros(1, dtype=np.int32)
 
     with mujoco.viewer.launch_passive(m, d, key_callback=mujoco_viewer_callback) as viewer:
 
@@ -80,6 +95,24 @@ def main():
         if not paused:
             velocity.ctrl = 0.0 # update velocity control value
             steering.ctrl = 0.0 # update steering control value
+
+            # Update obstables (bouncing movement)
+            for i, x in enumerate(obstacles):
+                dx = obstacle_direction[i][0]
+                dy = obstacle_direction[i][1]
+
+                px = m.geom_pos[x][0]
+                py = m.geom_pos[x][1]
+                pz = 0.02
+
+                nearest_dist = mujoco.mj_ray(m, d, [px, py, pz], obstacle_direction[i], None, 1, -1, unused)
+
+                if nearest_dist >= 0 and nearest_dist < 0.4:
+                    obstacle_direction[i][0] = -dy
+                    obstacle_direction[i][1] = dx
+
+                m.geom_pos[x][0] = m.geom_pos[x][0]+dx*0.001
+                m.geom_pos[x][1] = m.geom_pos[x][1]+dy*0.001
 
             # mj_step can be replaced with code that also evaluates
             # a policy and applies a control signal before stepping the physics.
