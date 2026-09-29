@@ -1,0 +1,187 @@
+<mujoco model="tiago_base">
+
+  <compiler angle="radian" meshdir="./assets/" autolimits="true" fusestatic="true"/>
+
+  <option integrator="implicitfast"/>
+
+  <visual>
+    <quality numslices="96"/>
+  </visual>
+
+  <asset>
+    <material name="black" rgba="0 0 0 1"/>
+    <material name="gray10" rgba="0.1 0.1 0.1 1"/>
+    <material name="gray70" rgba="0.7 0.7 0.7 1"/>
+    <material name="mercury" rgba="0.9 0.9 0.9 1"/>
+    <material name="white" rgba="1 1 1 1"/>
+    <material name="orange" rgba="1 0.487 0 1"/>
+    <texture name="logo" type="2d" file="assets/logo/boun.png" vflip="true"/>
+    <material name="logo" texture="logo" specular="0" shininess="0"/>
+
+    <mesh file="sensors/sick_tim551.stl"/>
+    <mesh file="sensors/srf05.stl"/>
+    <mesh file="base/base.stl"/>
+    <mesh file="base/base_ring.stl"/>
+    <mesh file="objects/antenna.stl"/>
+    <mesh file="wheels/wheel.stl"/>
+    <mesh file="wheels/caster_1.stl"/>
+    <mesh file="wheels/caster_2.stl"/>
+  </asset>
+
+  <default>
+    <geom contype="1" conaffinity="1" group="1" type="mesh" mass="0"/>
+    <joint axis="0 0 1"/>
+    <default class="wheel">
+      <geom condim="6"/>
+    </default>
+    <!-- Datasheet: 2 shock absorbers on the drive wheels (PAL's PMB-2 URDF has suspension links there, but
+         fixed, and publishes no spring data, so these values are estimates). Without them the rigid chassis
+         rests on the four casters on uneven ground and lifts the drive wheels off (no 12% ramps).
+         Axis 0 -1 0 is world-up in the wheel bodies' rotated frame.
+         - range: +-15 mm; a 12% ramp lifts the chassis ~10 mm at the drive wheels as the front casters climb
+         - stiffness/springref: ~75 N of spring force per wheel at nominal height; with the wheel's own weight
+           (~43 N) the drive wheels carry ~60% of the robot and the casters the rest. At full droop only the
+           wheel weight remains, still enough traction for a 12% ramp.
+         - damping: near-critical for the chassis share each spring carries -->
+    <default class="suspension">
+      <joint type="slide" axis="0 -1 0" range="-0.015 0.015" stiffness="5000" springref="-0.015" damping="300"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="base_link">
+      <joint name="reference" type="free"/>
+      <geom pos="0 0 0.0985" material="white" mesh="base"/>
+      <geom pos="0.202 0 0.0945" material="gray10" mesh="sick_tim551"/>
+      <geom pos="-0.183 0.183 0.2715" quat="0.382683 0 0 0.92388" material="gray10" mesh="srf05"/>
+      <geom pos="-0.259 0 0.2715" quat="0 0 0 1" material="gray10" mesh="srf05"/>
+      <geom pos="-0.183 -0.183 0.2715" quat="-0.382683 0 0 0.92388" material="gray10" mesh="srf05"/>
+      <geom pos="-0.201 0.1062 0.2935" material="black" mesh="antenna"/>
+      <geom pos="-0.201 -0.1062 0.2935" material="black" mesh="antenna"/>
+      <geom pos="0 0 0.13" material="orange" mesh="base_ring"/>
+      <!-- Logo decal on the lid (top at z=0.2965): 1 mm proud so no rim or shadow shows; visual only,
+           rotated so the image's top faces forward -->
+      <geom name="logo" type="cylinder" size="0.155 0.0005" pos="0 0 0.297" quat="0.7071 0 0 -0.7071"
+        material="logo" contype="0" conaffinity="0"/>
+      <!-- IMU mount from PAL's PMB-2 URDF (0.10171 0 0.11282 above the wheel axle); accelerometer and gyro
+           measure in this site's frame, kept aligned with the base (the URDF also yaws it -90 degrees) -->
+      <site name="imu" pos="0.10171 0 0.21132" size="0.01" rgba="1 0.3 0 1"/>
+      <!-- SICK TiM551 laser: a 19-beam, 180 degree horizontal fan (10 degree steps) facing forward.
+           Rangefinders cast along the site's +z axis and ignore the base_link body they sit on. -->
+      <frame pos="0.202 0 0.09" euler="0 0 -1.5708">
+        <replicate count="19" euler="0 0 0.174533">
+          <site name="laser" zaxis="1 0 0" size="0.005" rgba="1 0.3 0 1"/>
+        </replicate>
+      </frame>
+      <!-- SRF05 sonars on the back, each facing outward -->
+      <site name="sonar_left" pos="-0.183 0.183 0.2715" zaxis="-0.7071 0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="sonar_back" pos="-0.259 0 0.2715" zaxis="-1 0 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="sonar_right" pos="-0.183 -0.183 0.2715" zaxis="-0.7071 -0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+      <!-- Handbook: ~40 kg total with batteries; minus 9.36 kg of wheels and casters.
+           Center of mass and inertia from PAL's PMB-2 URDF base_link (28.27 kg, COM at wheel-axle height),
+           inertia scaled by 30.64 / 28.27 to this mass. fullinertia order: ixx iyy izz ixy ixz iyz -->
+      <inertial pos="0 0 0.0985" mass="30.64"
+        fullinertia="0.504489 0.523767 0.597202 0.002341 -0.001908 -0.000711"/>
+      <body name="wheel_right_link" pos="0 -0.2022 0.0985" quat="1 -1 0 0">
+        <inertial pos="0.0 0.0 0.0" mass="4.4" diaginertia="0.014 0.014 0.027"/>
+        <joint name="wheel_right_suspension" class="suspension"/>
+        <!-- From PAL's PMB-2 URDF: 6 N.m motor torque limit (wheel_torque) and 2 N.m drivetrain friction
+             (dynamics friction; its damping 1.0 is left out, it would exceed the motor torque at speed) -->
+        <joint name="wheel_right_joint" actuatorfrcrange="-6 6" frictionloss="2"/>
+        <geom material="gray10" mesh="wheel"/>
+      </body>
+      <body name="wheel_left_link" pos="0 0.2022 0.0985" quat="1 -1 0 0">
+        <inertial pos="0.0 0.0 0.0" mass="4.4" diaginertia="0.014 0.014 0.027"/>
+        <joint name="wheel_left_suspension" class="suspension"/>
+        <!-- From PAL's PMB-2 URDF: 6 N.m motor torque limit (wheel_torque) and 2 N.m drivetrain friction
+             (dynamics friction; its damping 1.0 is left out, it would exceed the motor torque at speed) -->
+        <joint name="wheel_left_joint" actuatorfrcrange="-6 6" frictionloss="2"/>
+        <geom quat="0 -1 0 0" material="gray10" mesh="wheel"/>
+      </body>
+      <body name="caster_front_right_1_link" pos="0.1695 -0.102 0.065" childclass="wheel">
+        <inertial pos="-0.00634599 5.347e-05 -0.0203752" quat="0.966491 -0.00340536 -0.256544 -0.00828025"
+          mass="0.0514476" diaginertia="1.66556e-05 1.30896e-05 1.04548e-05"/>
+        <joint name="caster_front_right_1_joint" damping="0.5"/>
+        <geom material="gray70" mesh="caster_1"/>
+        <body name="caster_front_right_2_link" pos="-0.016 0 -0.04" quat="1 -1 0 0">
+          <inertial pos="0 0 0" quat="1 0 0 1" mass="0.0885578" diaginertia="1.541e-05 1.075e-05 1.075e-05"/>
+          <joint name="caster_front_right_2_joint"/>
+          <!-- Collide as a 25 mm sphere like PAL's PMB-2 URDF; the mesh hull with rolling/torsional
+               friction (condim 6) made rolling drag grow with load to ~9% of the weight -->
+          <geom material="gray10" mesh="caster_2" contype="0" conaffinity="0"/>
+          <geom type="sphere" size="0.025" condim="3" group="3"/>
+        </body>
+      </body>
+      <body name="caster_front_left_1_link" pos="0.1695 0.102 0.065" childclass="wheel">
+        <inertial pos="-0.00634599 5.347e-05 -0.0203752" quat="0.966491 -0.00340536 -0.256544 -0.00828025"
+          mass="0.0514476" diaginertia="1.66556e-05 1.30896e-05 1.04548e-05"/>
+        <joint name="caster_front_left_1_joint" damping="0.5"/>
+        <geom material="gray70" mesh="caster_1"/>
+        <body name="caster_front_left_2_link" pos="-0.016 0 -0.04" quat="1 -1 0 0">
+          <inertial pos="0 0 0" quat="1 0 0 1" mass="0.0885578" diaginertia="1.541e-05 1.075e-05 1.075e-05"/>
+          <joint name="caster_front_left_2_joint"/>
+          <!-- Collide as a 25 mm sphere like PAL's PMB-2 URDF; the mesh hull with rolling/torsional
+               friction (condim 6) made rolling drag grow with load to ~9% of the weight -->
+          <geom material="gray10" mesh="caster_2" contype="0" conaffinity="0"/>
+          <geom type="sphere" size="0.025" condim="3" group="3"/>
+        </body>
+      </body>
+      <body name="caster_back_right_1_link" pos="-0.1735 -0.102 0.065" childclass="wheel">
+        <inertial pos="-0.00634599 5.347e-05 -0.0203752" quat="0.966491 -0.00340536 -0.256544 -0.00828025"
+          mass="0.0514476" diaginertia="1.66556e-05 1.30896e-05 1.04548e-05"/>
+        <joint name="caster_back_right_1_joint" damping="0.5"/>
+        <geom material="gray70" mesh="caster_1"/>
+        <body name="caster_back_right_2_link" pos="-0.016 0 -0.04" quat="1 -1 0 0">
+          <inertial pos="0 0 0" quat="1 0 0 1" mass="0.0885578" diaginertia="1.541e-05 1.075e-05 1.075e-05"/>
+          <joint name="caster_back_right_2_joint"/>
+          <!-- Collide as a 25 mm sphere like PAL's PMB-2 URDF; the mesh hull with rolling/torsional
+               friction (condim 6) made rolling drag grow with load to ~9% of the weight -->
+          <geom material="gray10" mesh="caster_2" contype="0" conaffinity="0"/>
+          <geom type="sphere" size="0.025" condim="3" group="3"/>
+        </body>
+      </body>
+      <body name="caster_back_left_1_link" pos="-0.1735 0.102 0.065" childclass="wheel">
+        <inertial pos="-0.00634599 5.347e-05 -0.0203752" quat="0.966491 -0.00340536 -0.256544 -0.00828025"
+          mass="0.0514476" diaginertia="1.66556e-05 1.30896e-05 1.04548e-05"/>
+        <joint name="caster_back_left_1_joint" damping="0.5"/>
+        <geom material="gray70" mesh="caster_1"/>
+        <body name="caster_back_left_2_link" pos="-0.016 0 -0.04" quat="1 -1 0 0">
+          <inertial pos="0 0 0" quat="1 0 0 1" mass="0.0885578" diaginertia="1.541e-05 1.075e-05 1.075e-05"/>
+          <joint name="caster_back_left_2_joint"/>
+          <!-- Collide as a 25 mm sphere like PAL's PMB-2 URDF; the mesh hull with rolling/torsional
+               friction (condim 6) made rolling drag grow with load to ~9% of the weight -->
+          <geom material="gray10" mesh="caster_2" contype="0" conaffinity="0"/>
+          <geom type="sphere" size="0.025" condim="3" group="3"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Caster wheels sit inside the base hull; MuJoCo only skips parent-child pairs -->
+  <contact>
+    <exclude body1="base_link" body2="caster_front_right_2_link"/>
+    <exclude body1="base_link" body2="caster_front_left_2_link"/>
+    <exclude body1="base_link" body2="caster_back_right_2_link"/>
+    <exclude body1="base_link" body2="caster_back_left_2_link"/>
+  </contact>
+
+  <sensor>
+    <!-- accelerometer reads +9.81 along the site's z axis at rest (gravity is subtracted) -->
+    <accelerometer name="imu_accel" site="imu"/>
+    <gyro name="imu_gyro" site="imu"/>
+    <!-- Handbook: the IMU also provides the attitude (orientation quaternion w x y z, world frame) -->
+    <framequat name="imu_quat" objtype="site" objname="imu"/>
+    <!-- Distances in meters, or -1 when nothing is hit within the cutoff -->
+    <rangefinder name="laser" site="laser" cutoff="10"/>
+    <rangefinder name="sonar_left" site="sonar_left" cutoff="4"/>
+    <rangefinder name="sonar_back" site="sonar_back" cutoff="4"/>
+    <rangefinder name="sonar_right" site="sonar_right" cutoff="4"/>
+  </sensor>
+
+  <actuator>
+    <!-- Wheel velocity servos: 15.3 rad/s on the 0.098 m effective wheel radius gives the datasheet 1.5 m/s -->
+    <velocity name="wheel_left_joint_vel" joint="wheel_left_joint" ctrlrange="-15.3 15.3" kv="100"/>
+    <velocity name="wheel_right_joint_vel" joint="wheel_right_joint" ctrlrange="-15.3 15.3" kv="100"/>
+  </actuator>
+
+</mujoco>
