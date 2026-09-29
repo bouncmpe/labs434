@@ -1,0 +1,76 @@
+<mujoco model="differential_drive">
+  <statistic center="0 0 0.1" extent="1.2" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- implicitfast keeps the stiff velocity servos on the light wheels stable. -->
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="implicitfast"/>
+
+  <!-- Only the wheels and casters touch the ground; the rest of the robot is visual. -->
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <default class="wheel">
+      <geom type="cylinder" size="0.035 0.01" zaxis="0 1 0" contype="1" conaffinity="1" rgba="0.2 0.2 0.2 1"
+        mass="0.1"/>
+      <joint type="hinge" axis="0 1 0" damping="0.01" armature="0.0005"/>
+    </default>
+    <default class="caster">
+      <!-- condim="1" makes the contact frictionless, so the ball acts as an ideal omnidirectional caster.
+           priority="1" makes the caster's condim win over the floor's (default is the max of both). -->
+      <geom type="sphere" size="0.015" condim="1" priority="1" contype="1" conaffinity="1" rgba="0.7 0.7 0.7 1" mass="0.02"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1" conaffinity="1"/>
+
+    <!-- Differential drive: two independently driven wheels on a common axle, plus passive casters.
+         With wheel speeds wl, wr, wheel radius r and wheel separation b:
+           v = r (wr + wl) / 2        omega = r (wr - wl) / b
+         Equal speeds drive straight, opposite speeds turn in place. -->
+    <body name="chassis" pos="0 0 0.035">
+      <freejoint/>
+      <geom name="base" type="cylinder" pos="0 0 0.03" size="0.12 0.02" rgba="0 0.6 0.9 1" mass="2"/>
+      <geom name="nose" type="box" pos="0.1 0 0.055" size="0.015 0.03 0.005" rgba="1 0.3 0 1" mass="0"/>
+      <geom name="caster_front" class="caster" pos="0.09 0 -0.02"/>
+      <geom name="caster_rear" class="caster" pos="-0.09 0 -0.02"/>
+      <site name="center" pos="0 0 0"/>
+
+      <!-- Wheel separation b = 0.2 m, wheel radius r = 0.035 m. -->
+      <body name="left_wheel" pos="0 0.1 0">
+        <joint name="left_wheel" class="wheel"/>
+        <geom name="left_wheel" class="wheel"/>
+      </body>
+      <body name="right_wheel" pos="0 -0.1 0">
+        <joint name="right_wheel" class="wheel"/>
+        <geom name="right_wheel" class="wheel"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <jointvel name="left_wheel_vel" joint="left_wheel"/>
+    <jointvel name="right_wheel_vel" joint="right_wheel"/>
+    <framepos name="chassis_pos" objtype="site" objname="center"/>
+    <velocimeter name="chassis_linvel" site="center"/>
+    <gyro name="chassis_angvel" site="center"/>
+  </sensor>
+
+  <!-- Wheel speed commands in rad/s (20 rad/s is 0.7 m/s at the rim). -->
+  <actuator>
+    <velocity name="left_wheel" joint="left_wheel" kv="0.5" ctrlrange="-20 20" forcerange="-2 2"/>
+    <velocity name="right_wheel" joint="right_wheel" kv="0.5" ctrlrange="-20 20" forcerange="-2 2"/>
+  </actuator>
+</mujoco>

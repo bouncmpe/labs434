@@ -1,0 +1,55 @@
+<mujoco model="imu_sensors">
+  <statistic center="0 0 0.1" extent="0.6" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- magnetic sets the global field seen by the magnetometer (default "0 -0.5 0"). -->
+  <option gravity="0 0 -9.81" timestep="0.002" magnetic="0 -0.5 0"/>
+
+  <default>
+    <joint damping="0.002"/>
+    <geom contype="0" conaffinity="0"/>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <geom name="post" type="cylinder" pos="0 0 0.35" size="0.02 0.35" rgba="0.5 0.5 0.5 1"/>
+
+    <!-- A free-swinging double pendulum with an IMU at the tip of the second link.
+         It starts horizontal, so it swings as soon as the simulation runs. -->
+    <body name="link1" pos="0 0.05 0.7">
+      <joint name="hinge1" type="hinge" axis="0 1 0"/>
+      <geom name="link1" type="capsule" fromto="0 0 0 0.25 0 0" size="0.015" rgba="0 0.6 0.9 1" mass="0.3"/>
+      <body name="link2" pos="0.25 0.03 0">
+        <joint name="hinge2" type="hinge" axis="0 1 0"/>
+        <geom name="link2" type="capsule" fromto="0 0 0 0.2 0 0" size="0.015" rgba="0.2 0.8 0.3 1" mass="0.2"/>
+        <geom name="imu_box" type="box" pos="0.2 0 0" size="0.025 0.02 0.01" rgba="0.9 0.6 0 1" mass="0.05"/>
+        <!-- IMU sensors measure in the site frame. -->
+        <site name="imu" pos="0.2 0 0" size="0.01" rgba="1 0.3 0 1"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <!-- accelerometer: linear acceleration minus gravity, so it reads +9.81 along the "up" axis at rest. -->
+    <accelerometer name="accel" site="imu"/>
+    <gyro name="gyro" site="imu"/>
+    <velocimeter name="velocimeter" site="imu"/>
+    <magnetometer name="magnetometer" site="imu"/>
+    <!-- Ground truth orientation, for comparison with sensor fusion. -->
+    <framequat name="imu_quat" objtype="site" objname="imu"/>
+  </sensor>
+</mujoco>

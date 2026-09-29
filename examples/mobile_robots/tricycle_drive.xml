@@ -1,0 +1,84 @@
+<mujoco model="tricycle_drive">
+  <statistic center="0 0 0.1" extent="1.2" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- implicitfast keeps the stiff velocity servos on the light wheels stable. -->
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="implicitfast"/>
+
+  <!-- Only the wheels touch the ground; the rest of the robot is visual. -->
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <default class="wheel">
+      <geom type="cylinder" size="0.05 0.012" zaxis="0 1 0" contype="1" conaffinity="1" rgba="0.2 0.2 0.2 1"
+        mass="0.15"/>
+      <joint type="hinge" axis="0 1 0" damping="0.01" armature="0.0005"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1" conaffinity="1"/>
+
+    <!-- Tricycle drive: a single front wheel that is both steered and driven, and two passive rear wheels.
+         With front wheel speed w, steering angle phi, wheel radius r and wheelbase L:
+           v = r w cos(phi)           omega = r w sin(phi) / L
+         where v is the speed of the rear axle midpoint. -->
+    <body name="chassis" pos="0 0 0.05">
+      <freejoint/>
+      <geom name="frame" type="box" pos="0 0 0.04" size="0.2 0.1 0.015" rgba="0 0.6 0.9 1" mass="2"/>
+      <geom name="rear_axle" type="capsule" fromto="-0.15 -0.12 0 -0.15 0.12 0" size="0.008" rgba="0.5 0.5 0.5 1"
+        mass="0"/>
+      <site name="rear_axle_center" pos="-0.15 0 0"/>
+
+      <!-- Wheelbase L = 0.3 m, rear track 0.26 m, wheel radius r = 0.05 m. -->
+      <body name="rear_left_wheel" pos="-0.15 0.13 0">
+        <joint name="rear_left_wheel" class="wheel"/>
+        <geom name="rear_left_wheel" class="wheel"/>
+      </body>
+      <body name="rear_right_wheel" pos="-0.15 -0.13 0">
+        <joint name="rear_right_wheel" class="wheel"/>
+        <geom name="rear_right_wheel" class="wheel"/>
+      </body>
+
+      <!-- Front fork: a vertical steering hinge carrying the driven wheel. -->
+      <body name="fork" pos="0.15 0 0">
+        <joint name="steering" type="hinge" axis="0 0 1" range="-80 80" damping="0.1" armature="0.001"/>
+        <geom name="fork_left" type="capsule" fromto="0 0.025 0 0 0.025 0.04" size="0.006" rgba="0.5 0.5 0.5 1"
+          mass="0.02"/>
+        <geom name="fork_right" type="capsule" fromto="0 -0.025 0 0 -0.025 0.04" size="0.006" rgba="0.5 0.5 0.5 1"
+          mass="0.02"/>
+        <geom name="heading" type="box" pos="0.03 0 0.06" size="0.03 0.005 0.003" rgba="1 0.3 0 1" mass="0"/>
+        <body name="front_wheel">
+          <joint name="front_wheel" class="wheel"/>
+          <geom name="front_wheel" class="wheel"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <jointpos name="steering_pos" joint="steering"/>
+    <jointvel name="front_wheel_vel" joint="front_wheel"/>
+    <framepos name="rear_axle_pos" objtype="site" objname="rear_axle_center"/>
+    <velocimeter name="rear_axle_linvel" site="rear_axle_center"/>
+    <gyro name="chassis_angvel" site="rear_axle_center"/>
+  </sensor>
+
+  <actuator>
+    <!-- Steering angle command in rad, front wheel speed command in rad/s (15 rad/s is 0.75 m/s). -->
+    <position name="steering" joint="steering" kp="20" dampratio="1" ctrlrange="-1.4 1.4"/>
+    <velocity name="front_wheel" joint="front_wheel" kv="0.5" ctrlrange="-15 15" forcerange="-3 3"/>
+  </actuator>
+</mujoco>

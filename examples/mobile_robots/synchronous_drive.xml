@@ -1,0 +1,105 @@
+<mujoco model="synchronous_drive">
+  <statistic center="0 0 0.1" extent="1.2" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- implicitfast keeps the stiff velocity servos on the light wheels stable. -->
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="implicitfast"/>
+
+  <!-- Only the wheels touch the ground; the rest of the robot is visual. -->
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <default class="steer">
+      <joint type="hinge" axis="0 0 1" damping="0.1" armature="0.001"/>
+      <geom type="capsule" fromto="0 0 0 0 0 0.05" size="0.008" rgba="0.5 0.5 0.5 1" mass="0.02"/>
+    </default>
+    <default class="wheel">
+      <geom type="cylinder" size="0.04 0.012" zaxis="0 1 0" contype="1" conaffinity="1" rgba="0.2 0.2 0.2 1"
+        mass="0.1"/>
+      <joint type="hinge" axis="0 1 0" damping="0.01" armature="0.0005"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1" conaffinity="1"/>
+
+    <!-- Synchronous drive: three wheels that always point in the same direction and spin at the same speed.
+         In a real robot one motor steers all wheels and another drives all wheels, through belts or chains.
+         Here the belts are modelled by joint equality constraints (wheel_2 = wheel_1, and so on).
+         The chassis never rotates: with wheel speed w, wheel radius r and steering angle phi, it translates
+         with velocity r w (cos(phi), sin(phi)). The turret on top turns with the wheels, so a sensor mounted
+         on it always faces the direction of travel. -->
+    <body name="chassis" pos="0 0 0.04">
+      <freejoint/>
+      <geom name="base" type="cylinder" pos="0 0 0.07" size="0.16 0.02" rgba="0 0.6 0.9 1" mass="3"/>
+      <site name="center" pos="0 0 0"/>
+
+      <body name="turret" pos="0 0 0.09">
+        <joint name="turret" class="steer"/>
+        <geom name="turret" type="cylinder" pos="0 0 0.01" size="0.06 0.01" rgba="0.8 0.8 0.8 1" mass="0.1"/>
+        <geom name="heading" type="box" pos="0.08 0 0.01" size="0.03 0.01 0.005" rgba="1 0.3 0 1" mass="0"/>
+      </body>
+
+      <!-- Three wheel modules on a circle of radius 0.12 m, 120 degrees apart. -->
+      <body name="module_1" pos="0.12 0 0">
+        <joint name="steer_1" class="steer"/>
+        <geom name="leg_1" class="steer"/>
+        <body name="wheel_1">
+          <joint name="wheel_1" class="wheel"/>
+          <geom name="wheel_1" class="wheel"/>
+        </body>
+      </body>
+      <body name="module_2" pos="-0.06 0.10392 0">
+        <joint name="steer_2" class="steer"/>
+        <geom name="leg_2" class="steer"/>
+        <body name="wheel_2">
+          <joint name="wheel_2" class="wheel"/>
+          <geom name="wheel_2" class="wheel"/>
+        </body>
+      </body>
+      <body name="module_3" pos="-0.06 -0.10392 0">
+        <joint name="steer_3" class="steer"/>
+        <geom name="leg_3" class="steer"/>
+        <body name="wheel_3">
+          <joint name="wheel_3" class="wheel"/>
+          <geom name="wheel_3" class="wheel"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- The steering belt and the drive belt: joint1 = joint2 (the default polycoef is "0 1 0 0 0"). -->
+  <equality>
+    <joint joint1="steer_2" joint2="steer_1"/>
+    <joint joint1="steer_3" joint2="steer_1"/>
+    <joint joint1="turret" joint2="steer_1"/>
+    <joint joint1="wheel_2" joint2="wheel_1"/>
+    <joint joint1="wheel_3" joint2="wheel_1"/>
+  </equality>
+
+  <sensor>
+    <jointpos name="steering_pos" joint="steer_1"/>
+    <jointvel name="wheel_vel" joint="wheel_1"/>
+    <framepos name="chassis_pos" objtype="site" objname="center"/>
+    <velocimeter name="chassis_linvel" site="center"/>
+    <gyro name="chassis_angvel" site="center"/>
+  </sensor>
+
+  <actuator>
+    <!-- Steering angle command in rad (the joint is unlimited), wheel speed command in rad/s. -->
+    <position name="steering" joint="steer_1" kp="20" dampratio="1" ctrlrange="-3.1416 3.1416"/>
+    <velocity name="drive" joint="wheel_1" kv="1" ctrlrange="-20 20" forcerange="-5 5"/>
+  </actuator>
+</mujoco>

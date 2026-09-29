@@ -1,0 +1,47 @@
+<mujoco model="contact_sensor">
+  <statistic center="0 0 0.1" extent="0.6" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- A tilted ramp: the box slides down (low friction), while the ball rolls. -->
+    <geom name="ramp" type="box" pos="0 0 0.15" euler="0 20 0" size="0.4 0.2 0.01" rgba="0.5 0.5 0.5 1"/>
+
+    <body name="box" pos="-0.25 0.08 0.35" euler="0 20 0">
+      <freejoint/>
+      <!-- priority makes this geom's friction win over the ramp's (default is the max of both). -->
+      <geom name="box" type="box" size="0.04 0.04 0.04" rgba="0.9 0.6 0 1" mass="1" friction="0.2" priority="1"/>
+    </body>
+    <body name="ball" pos="-0.25 -0.08 0.35">
+      <freejoint/>
+      <geom name="ball" type="sphere" size="0.04" rgba="0.2 0.8 0.3 1" mass="0.5"/>
+    </body>
+  </worldbody>
+
+  <!-- The contact sensor matches contacts between two geoms (or bodies/subtrees), then reports the
+       requested data fields. "found" is the number of matching contacts; reduce="netforce" merges
+       all matches into one net contact expressed in the global frame. -->
+  <sensor>
+    <contact name="box_ramp" geom1="box" geom2="ramp" num="1" data="found force" reduce="netforce"/>
+    <contact name="box_floor" geom1="box" geom2="floor" num="1" data="found force" reduce="netforce"/>
+    <contact name="ball_any" geom1="ball" num="1" data="found dist normal" reduce="mindist"/>
+    <framelinvel name="box_vel" objtype="body" objname="box"/>
+    <frameangvel name="ball_angvel" objtype="body" objname="ball"/>
+  </sensor>
+</mujoco>

@@ -1,0 +1,48 @@
+<mujoco model="prismatic_joint_position">
+  <statistic center="0 0 0.1" extent="0.6" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <default>
+    <joint damping="1"/>
+    <geom contype="0" conaffinity="0"/>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <geom name="post_left" type="cylinder" pos="-0.35 0 0.1" size="0.02 0.1" rgba="0.5 0.5 0.5 1"/>
+    <geom name="post_right" type="cylinder" pos="0.35 0 0.1" size="0.02 0.1" rgba="0.5 0.5 0.5 1"/>
+    <geom name="rail" type="capsule" fromto="-0.35 0 0.2 0.35 0 0.2" size="0.01" rgba="0.2 0.2 0.2 1"/>
+
+    <body name="carriage" pos="0 0 0.2">
+      <joint name="slider" type="slide" axis="1 0 0" pos="0 0 0" range="-0.3 0.3"/>
+      <geom name="block" type="box" size="0.04 0.03 0.03" rgba="0 0.6 0.9 1" mass="0.5"/>
+      <site name="marker" pos="0 0 0.03" size="0.01" rgba="1 0.3 0 1"/>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <jointpos name="slider_pos" joint="slider"/>
+    <jointvel name="slider_vel" joint="slider"/>
+    <framepos name="marker_pos" objtype="site" objname="marker"/>
+  </sensor>
+
+  <actuator>
+    <position name="position_servo" joint="slider" kp="50" kv="5" ctrlrange="-0.3 0.3"/>
+  </actuator>
+</mujoco>
