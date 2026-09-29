@@ -1,9 +1,0 @@
-<mujoco model="palet_drop">
-	
-	<worldbody>
-		<body>
-			<site name="palet_drop" pos="5 5 0" size="0.1 0.1 0.1"/>
-		</body>
-	</worldbody>
-		
-</mujoco>
