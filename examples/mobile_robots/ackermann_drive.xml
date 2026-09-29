@@ -1,0 +1,122 @@
+<mujoco model="ackermann_drive">
+  <statistic center="0 0 0.1" extent="1.2" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- implicitfast keeps the stiff velocity servos on the light wheels stable. -->
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="implicitfast"/>
+
+  <!-- Only the wheels touch the ground; the rest of the car is visual. -->
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <default class="steer">
+      <joint type="hinge" axis="0 0 1" range="-45 45" damping="0.1" armature="0.001"/>
+      <geom type="capsule" fromto="0 0 0 0 0 0.04" size="0.006" rgba="0.5 0.5 0.5 1" mass="0.02"/>
+    </default>
+    <default class="wheel">
+      <geom type="cylinder" size="0.05 0.015" zaxis="0 1 0" contype="1" conaffinity="1" rgba="0.2 0.2 0.2 1"
+        mass="0.15"/>
+      <joint type="hinge" axis="0 1 0" damping="0.01" armature="0.0005"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1" conaffinity="1"/>
+
+    <!-- Ackermann drive (car-like): rear-wheel drive and two steered front wheels. For the wheels to roll
+         without slipping, both front wheel axles must pass through the turning center on the rear axle line,
+         so the inner wheel steers more than the outer one. With wheelbase L, track W and the steering angle
+         delta of an equivalent bicycle (a virtual wheel at the middle of the front axle):
+           tan(delta_left)  = tan(delta) / (1 - W tan(delta) / (2 L))
+           tan(delta_right) = tan(delta) / (1 + W tan(delta) / (2 L))
+         The kinematics then match the bicycle model, with v the speed of the rear axle midpoint:
+           omega = v tan(delta) / L -->
+    <body name="chassis" pos="0 0 0.05">
+      <freejoint/>
+      <geom name="body" type="box" pos="0 0 0.05" size="0.22 0.08 0.02" rgba="0 0.6 0.9 1" mass="2"/>
+      <geom name="rear_axle" type="capsule" fromto="-0.15 -0.1 0 -0.15 0.1 0" size="0.008" rgba="0.5 0.5 0.5 1"
+        mass="0"/>
+      <geom name="front_axle" type="capsule" fromto="0.15 -0.1 0 0.15 0.1 0" size="0.008" rgba="0.5 0.5 0.5 1"
+        mass="0"/>
+      <site name="rear_axle_center" pos="-0.15 0 0"/>
+
+      <!-- The steering wheel is the virtual bicycle wheel: its angle is delta. It is just a handle for the
+           actuator; the front wheels follow it through the equality constraints below. -->
+      <body name="steering_wheel" pos="0.15 0 0.08">
+        <joint name="steering" type="hinge" axis="0 0 1" range="-34 34" damping="0.1" armature="0.001"/>
+        <geom name="steering_wheel" type="cylinder" size="0.03 0.004" rgba="0.2 0.2 0.2 1" mass="0.02"/>
+        <geom name="heading" type="box" pos="0.02 0 0.005" size="0.02 0.004 0.002" rgba="1 0.3 0 1" mass="0"/>
+      </body>
+
+      <!-- Wheelbase L = 0.3 m, track W = 0.2 m, wheel radius r = 0.05 m. -->
+      <body name="front_left_knuckle" pos="0.15 0.1 0">
+        <joint name="steer_left" class="steer"/>
+        <geom name="kingpin_left" class="steer"/>
+        <body name="front_left_wheel" pos="0 0.02 0">
+          <joint name="front_left_wheel" class="wheel"/>
+          <geom name="front_left_wheel" class="wheel"/>
+        </body>
+      </body>
+      <body name="front_right_knuckle" pos="0.15 -0.1 0">
+        <joint name="steer_right" class="steer"/>
+        <geom name="kingpin_right" class="steer"/>
+        <body name="front_right_wheel" pos="0 -0.02 0">
+          <joint name="front_right_wheel" class="wheel"/>
+          <geom name="front_right_wheel" class="wheel"/>
+        </body>
+      </body>
+      <body name="rear_left_wheel" pos="-0.15 0.12 0">
+        <joint name="rear_left_wheel" class="wheel"/>
+        <geom name="rear_left_wheel" class="wheel"/>
+      </body>
+      <body name="rear_right_wheel" pos="-0.15 -0.12 0">
+        <joint name="rear_right_wheel" class="wheel"/>
+        <geom name="rear_right_wheel" class="wheel"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Steering linkage: the Ackermann relations above, fitted by quartic polynomials over |delta| < 0.6 rad
+       (error below 0.001 rad). polycoef gives joint1 = a0 + a1 x + a2 x^2 + a3 x^3 + a4 x^4, x = joint2. -->
+  <equality>
+    <joint joint1="steer_left" joint2="steering" polycoef="0 1.0029 0.3355 0.0731 -0.0943"/>
+    <joint joint1="steer_right" joint2="steering" polycoef="0 1.0029 -0.3355 0.0731 0.0943"/>
+  </equality>
+
+  <!-- Open differential: the drive tendon is the average of the rear wheel angles. A force on the tendon
+       is split equally between the two wheels, while each wheel is free to turn at its own speed. -->
+  <tendon>
+    <fixed name="rear_differential">
+      <joint joint="rear_left_wheel" coef="0.5"/>
+      <joint joint="rear_right_wheel" coef="0.5"/>
+    </fixed>
+  </tendon>
+
+  <sensor>
+    <jointpos name="steering_pos" joint="steering"/>
+    <jointpos name="steer_left_pos" joint="steer_left"/>
+    <jointpos name="steer_right_pos" joint="steer_right"/>
+    <tendonvel name="drive_vel" tendon="rear_differential"/>
+    <framepos name="rear_axle_pos" objtype="site" objname="rear_axle_center"/>
+    <velocimeter name="rear_axle_linvel" site="rear_axle_center"/>
+    <gyro name="chassis_angvel" site="rear_axle_center"/>
+  </sensor>
+
+  <actuator>
+    <!-- Steering angle delta in rad, mean rear wheel speed in rad/s (20 rad/s is 1 m/s). -->
+    <position name="steering" joint="steering" kp="20" dampratio="1" ctrlrange="-0.6 0.6"/>
+    <velocity name="drive" tendon="rear_differential" kv="1" ctrlrange="-20 20" forcerange="-6 6"/>
+  </actuator>
+</mujoco>

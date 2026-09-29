@@ -1,0 +1,68 @@
+<mujoco model="rangefinder_sensor">
+  <statistic center="0 0 0.1" extent="0.6" meansize=".05"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <!-- implicitfast keeps the velocity servo stable on the low-inertia scanner head. -->
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="implicitfast"/>
+
+  <default>
+    <joint damping="0.05"/>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- Obstacles around the scanner. -->
+    <geom name="wall" type="box" pos="0.6 0 0.15" size="0.02 0.4 0.15" rgba="0.9 0.6 0 1"/>
+    <geom name="pillar1" type="cylinder" pos="-0.3 0.35 0.15" size="0.05 0.15" rgba="0.2 0.8 0.3 1"/>
+    <geom name="pillar2" type="cylinder" pos="-0.4 -0.3 0.15" size="0.08 0.15" rgba="0.2 0.8 0.3 1"/>
+    <geom name="block" type="box" pos="0 -0.5 0.15" size="0.1 0.05 0.15" rgba="0.8 0.3 0.8 1"/>
+
+    <geom name="post" type="cylinder" pos="0 0 0.05" size="0.04 0.05" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0"/>
+
+    <!-- A spinning 8-beam scanner. A rangefinder casts a ray along the +z axis of its site and
+         returns the distance to the first geom hit, or -1 if nothing is hit within the cutoff.
+         Rays are drawn in the viewer (Rendering > Model Elements > Range finder). -->
+    <body name="scanner" pos="0 0 0.15">
+      <joint name="spin" type="hinge" axis="0 0 1"/>
+      <geom name="head" type="cylinder" size="0.05 0.03" rgba="0 0.6 0.9 1" mass="0.2" contype="0" conaffinity="0"/>
+      <site name="beam0" pos="0 0 0" zaxis="1 0 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam1" pos="0 0 0" zaxis="0.7071 0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam2" pos="0 0 0" zaxis="0 1 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam3" pos="0 0 0" zaxis="-0.7071 0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam4" pos="0 0 0" zaxis="-1 0 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam5" pos="0 0 0" zaxis="-0.7071 -0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam6" pos="0 0 0" zaxis="0 -1 0" size="0.005" rgba="1 0.3 0 1"/>
+      <site name="beam7" pos="0 0 0" zaxis="0.7071 -0.7071 0" size="0.005" rgba="1 0.3 0 1"/>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <rangefinder name="range0" site="beam0" cutoff="2"/>
+    <rangefinder name="range1" site="beam1" cutoff="2"/>
+    <rangefinder name="range2" site="beam2" cutoff="2"/>
+    <rangefinder name="range3" site="beam3" cutoff="2"/>
+    <rangefinder name="range4" site="beam4" cutoff="2"/>
+    <rangefinder name="range5" site="beam5" cutoff="2"/>
+    <rangefinder name="range6" site="beam6" cutoff="2"/>
+    <rangefinder name="range7" site="beam7" cutoff="2"/>
+    <jointpos name="spin_angle" joint="spin"/>
+  </sensor>
+
+  <actuator>
+    <velocity name="spin_servo" joint="spin" kv="0.5" ctrlrange="-3 3"/>
+  </actuator>
+</mujoco>
