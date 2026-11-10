@@ -161,3 +161,8 @@ cython_debug/
 
 # Mujoco
 MUJOCO_LOG.TXT
+
+# project solutions (instructor only)
+project/solution.py
+project/evaluate.py
+project/seeds.txt
